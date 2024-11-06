@@ -39,8 +39,11 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public Employee updateEmployee(Employee updatedEmployee, Long id) {
-
-        return employeeRepository.save(updatedEmployee);
+        Employee employeeSaved = employeeRepository
+                .findById(id).orElseThrow(()-> new ResourceNotFoundException("No se pudo encontar"));
+        employeeSaved.setFirstName(updatedEmployee.getFirstName());
+        employeeSaved.setLastName(updatedEmployee.getLastName());
+        return employeeRepository.save(employeeSaved);
     }
 
     @Override

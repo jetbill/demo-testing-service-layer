@@ -109,6 +109,93 @@ class EmployeeServiceTest {
 
     }
 
+    @DisplayName("JUnit test for getEmployeeById method")
+    @Test
+    void givenEmployeeId_whenGetEmployeeById_thenReturnEmployeeObject(){
+        // given
+        given(employeeRepository.findById(1L)).willReturn(Optional.of(employee));
+        // when
+        Employee savedEmployee = employeeService.getEmployeeById(employee.getId()).get();
+        // then
+        assertThat(savedEmployee).isNotNull();
+    }
+
+    @DisplayName("JUnit test for updateEmployee method")
+    @Test
+    void givenEmployeeObject_whenUpdateEmployee_thenReturnUpdatedEmployee(){
+        long employeeId = 1L;
+        Employee forUpdate = Employee.builder()
+                .id(employeeId)
+                .firstName("Marcos")
+                .lastName("Figueroa")
+                .build();
+        // given
+        // Mocking findById to return the existing employee
+        given(employeeRepository.findById(employeeId)).willReturn(Optional.of(employee));
+        // Mocking save to return the updated employee
+        Employee updatedEmployeeMock = new Employee(employeeId,
+                "Marcos", "Figueroa", "jetbill@gmail.com");
+        given(employeeRepository.save(employee)).willReturn(updatedEmployeeMock);
 
 
+        // when
+        Employee updatedEmployee = employeeService.updateEmployee(forUpdate, employeeId);
+
+        // Then
+        assertThat(updatedEmployee).isNotNull();
+        assertThat(updatedEmployee.getId()).isEqualTo(employeeId);
+        assertThat(updatedEmployee.getFirstName()).isEqualTo("Marcos");
+        assertThat(updatedEmployee.getLastName()).isEqualTo("Figueroa");
+        assertThat(updatedEmployee.getEmail()).isEqualTo("jetbill@gmail.com");
+
+        // Verify that findById was called once with the correct ID
+        verify(employeeRepository).findById(employeeId);
+
+        // Verify that save was called once with the updated employee
+        verify(employeeRepository).save(employee);
+    }
+
+    @Test
+    @DisplayName("JUnit test for updateEmployee method - Employee Not Found")
+    void givenNonExistingEmployeeId_whenUpdateEmployee_thenThrowException(){
+        // given
+        Long employeeId = 2L;
+        Employee forUpdate = Employee.builder()
+                .id(employeeId)
+                .firstName("María")
+                .lastName("García")
+                .build();
+
+        //when
+        // Mocking findById to return empty, simulating employee not found
+        given(employeeRepository.findById(employeeId)).willReturn(Optional.empty());
+
+        // Act & Assert (When & Then)
+        assertThrows(ResourceNotFoundException.class, () -> {
+            employeeService.updateEmployee(forUpdate, employeeId);
+        });
+
+        // Verify that findById was called once with the correct ID
+        verify(employeeRepository).findById(employeeId);
+
+        // Verify that save was never called since employee was not found
+        verify(employeeRepository, never()).save(any(Employee.class));
+    }
+
+    @DisplayName("JUnit test for deleteEmployee method")
+    @Test
+     void givenEmployeeId_whenDeleteEmployee_thenNothing(){
+        // given
+        long employeeId = 1L;
+        willDoNothing().given(employeeRepository).deleteById(employeeId);
+
+        // when
+        employeeService.deleteEmployee(employeeId);
+
+        // then
+        verify(employeeRepository, times(1)).deleteById(employeeId);
+    }
 }
+
+
+
